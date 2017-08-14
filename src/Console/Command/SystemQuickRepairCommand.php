@@ -44,7 +44,13 @@ class SystemQuickRepairCommand extends AbstractConfigOptionCommand
                  'f',
                  InputOption::VALUE_NONE,
                  'Really execute the SQL queries (displayed by using -d).'
-             );
+             )
+            ->addOption(
+                'action',
+                'a',
+                InputOption::VALUE_OPTIONAL,
+                'Action to run, default value repairMetadataAPICache'
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -58,7 +64,14 @@ class SystemQuickRepairCommand extends AbstractConfigOptionCommand
         $progress->advance();
         $sugarSystem = new SugarSystem($sugarEP);
         $progress->setMessage('Working...');
-        $messages = $sugarSystem->repairAll($input->getOption('force'));
+        if ($input->getOption('action')) {
+            require_once('modules/Administration/QuickRepairAndRebuild.php');
+            require_once('include/utils/layout_utils.php');
+            $repair = new \RepairAndClear();
+            $messages = $repair->repairAndClearAll(array($input->getOption('action')), array(translate('LBL_ALL_MODULES')), '', true, '');
+        } else {
+            $messages = $sugarSystem->repairAll($input->getOption('force'));
+        }
         $progress->finish('<info>Repair Done.</info>');
 
         if ($output->isVerbose()) {
